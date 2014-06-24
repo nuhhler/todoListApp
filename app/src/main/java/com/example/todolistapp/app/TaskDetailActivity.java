@@ -23,13 +23,14 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
     public static final int DIALOG_CONFIRM = 1;
 
     @Override
-    protected void onCreate( Bundle savedInstanceState ) {
+    protected void onCreate( Bundle savedInstanceState )
+    {
         super.onCreate( savedInstanceState );
-        setContentView(R.layout.activity_task_detail);
+        setContentView( R.layout.activity_task_detail );
 
         myContentProvider = ContentProvider.getInstance();
 
-        // find Views
+        // get Views
         etTaskName = (EditText)findViewById(R.id.etTaskName);
         etTaskDescription = (EditText)findViewById(R.id.etTaskDescription);
         btnOk = (Button)findViewById(R.id.btnOk);
@@ -41,24 +42,22 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
         btnCancel.setOnClickListener(this);
         rbgPriority.setOnClickListener( this );
 
-        // restore values if the user edits existing task
-        Intent anIntent = getIntent();
-        myTaskId = anIntent.getLongExtra( TaskData.LABEL_ID, TaskData.INCORRECT_ID );
-        if( myTaskId != TaskData.INCORRECT_ID )
+        // restore values if user edits the existing task
+        myTask = getIntent().getParcelableExtra( TaskData.class.getCanonicalName() );
+        if( TaskData.isValid( myTask ) )
         {
-            TaskData aTask = myContentProvider.getTask( myTaskId );
-            etTaskName.setText(aTask.getName());
-            etTaskDescription.setText( aTask.getDescription() );
-            switch ( aTask.getPriority() )
+            etTaskName.setText( myTask.getName() );
+            etTaskDescription.setText( myTask.getDescription() );
+            switch ( myTask.getPriority() )
             {
                 case TaskData.PRIORITY_LOW:
-                    rbgPriority.check(R.id.rbtnLowPriority);
+                    rbgPriority.check( R.id.rbtnLowPriority );
                     break;
                 case TaskData.PRIORITY_NORMAL:
                     rbgPriority.check( R.id.rbtnNormalPriority );
                     break;
                 case TaskData.PRIORITY_HIGH:
-                    rbgPriority.check(R.id.rbtnHighPriority );
+                    rbgPriority.check( R.id.rbtnHighPriority );
                     break;
             }
         }
@@ -99,7 +98,7 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
 
                 int nmb = myContentProvider.getNmbTasks( TaskData.LABEL_NAME, aName );
                 if( nmb == 0 ||
-                    nmb == 1 && isEditMode() && myContentProvider.getTask( myTaskId ).getName().equals( aName) )
+                    nmb == 1 && isEditMode() && myTask.getName().equals( aName ) )
                 {
                     executeOperation();
                 }
@@ -171,7 +170,7 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
 
     private boolean isEditMode()
     {
-        return myTaskId != TaskData.INCORRECT_ID;
+        return TaskData.isValid( myTask );
     }
 
     private void executeOperation()
@@ -180,38 +179,38 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
         int result;
 
         // insert new task to database
-        TaskData aNewTask = new TaskData( TaskData.INCORRECT_ID,
-                etTaskName.getText().toString(),
-                etTaskDescription.getText().toString(),
-                getPriority(),
-                false );
-
-        if( !isEditMode() )
+        if ( isEditMode() )
         {
-            aNewTask.setId( myContentProvider.insert(aNewTask) );
-            myTaskId = aNewTask.getId();
-            result = RESULT_NEW;
+            result = RESULT_EDITED;
+            myTask.setName( etTaskName.getText().toString() );
+            myTask.setDescription( etTaskDescription.getText().toString() );
+            myTask.setPriority( getPriority() );
         }
         else
         {
-            aNewTask.setId( myTaskId );
-            myContentProvider.update( aNewTask );
-            result = RESULT_EDITED;
+            result = RESULT_NEW;
+            myTask = new TaskData( etTaskName.getText().toString(),
+                                   etTaskDescription.getText().toString(),
+                                   getPriority() );
+            long anId = myContentProvider.insert( myTask );
+            myTask.setId( anId );
         }
 
         // send result
-        anIntent.putExtra( TaskData.LABEL_ID, myTaskId );
+        anIntent.putExtra( TaskData.class.getCanonicalName(), myTask );
+        myTask = null;
+
         setResult( result, anIntent );
         finish();
     }
 
-    // private fields
+    /* ===================== private fields ===================== */
     private Button btnOk;
     private Button btnCancel;
     private RadioGroup rbgPriority;
     private EditText etTaskName;
     private EditText etTaskDescription;
     private ContentProvider myContentProvider;
-    private long myTaskId;
+    private TaskData myTask;
 
 }

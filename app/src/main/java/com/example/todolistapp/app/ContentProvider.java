@@ -144,6 +144,10 @@ public class ContentProvider
         return myDataBase.delete( TABLE_NAME, aSelection, aSelectionArgs );
     }
 
+    public int removeTask( TaskData theTask )
+    {
+        return removeTask( theTask.getId() );
+    }
 
 
     // internal fields

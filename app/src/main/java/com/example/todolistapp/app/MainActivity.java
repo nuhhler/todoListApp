@@ -32,10 +32,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         ContentProvider.initialize( this );
         myContentProvider = ContentProvider.getInstance();
 
-
-        // create internal data
-        myTaskDetailIntent = new Intent( this, TaskDetailActivity.class );
-
         // get Views
         btnNewTask = (Button)findViewById( R.id.btnNewTask );
         lvTaskList = (ListView)findViewById( R.id.lvTaskList );
@@ -44,7 +40,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         String[] from = new String[] { TaskData.LABEL_NAME, TaskData.LABEL_DESCRIPTION };
         int[] to = new int[] { R.id.tvItemTaskName, R.id.tvItemTaskDesc };
 
-        myData = prepareData( myContentProvider.getTasks() );
+        myData = TaskData.toArrayListOfMap(myContentProvider.getTasks());
         myAdapter = new SimpleAdapter( this, myData, R.layout.task_item_list, from, to );
         lvTaskList.setAdapter( myAdapter );
 
@@ -54,7 +50,8 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
     }
 
-    protected void onDestroy() {
+    protected void onDestroy()
+    {
         super.onDestroy();
         myContentProvider.close();
     }
@@ -63,16 +60,28 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     {
         if ( theRequestCode == REQUEST_CODE_TASK_DETAIL && theResultCode == TaskDetailActivity.RESULT_NEW )
         {
-            long anId = theData.getLongExtra( TaskData.LABEL_ID, TaskData.INCORRECT_ID );
-            Map<String, Object> aNewTaskData = myContentProvider.getTask( anId ).toMap();
-            myData.add( aNewTaskData );
+            TaskData aTask = theData.getParcelableExtra( TaskData.class.getCanonicalName() );
+            myData.add( aTask.toMap() );
             myAdapter.notifyDataSetChanged();
         }
         else if ( theRequestCode == REQUEST_CODE_TASK_DETAIL && theResultCode == TaskDetailActivity.RESULT_EDITED )
         {
-            // todo can be optimized
-            Collections.copy( myData, prepareData( myContentProvider.getTasks() ) );
-            myAdapter.notifyDataSetChanged();
+            TaskData aTask = theData.getParcelableExtra( TaskData.class.getCanonicalName() );
+            if( !TaskData.isValid( aTask ) )
+            {
+                // todo throw exception
+                return;
+            }
+
+            for( Map<String, Object> aChangedTaskInfo : myData )
+            {
+                if( (Long)aChangedTaskInfo.get(TaskData.LABEL_ID) == aTask.getId() ) {
+                    aChangedTaskInfo.clear();
+                    aChangedTaskInfo.putAll( aTask.toMap() );
+                    myAdapter.notifyDataSetChanged();
+                    break;
+                }
+            }
         }
     }
 
@@ -103,8 +112,9 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     {
         if( theView.getId() == R.id.btnNewTask )
         {
-            myTaskDetailIntent.putExtra( TaskData.LABEL_ID, TaskData.INCORRECT_ID );
-            startActivityForResult(myTaskDetailIntent, REQUEST_CODE_TASK_DETAIL);
+            Intent anIntent = new Intent( this, TaskDetailActivity.class );
+            anIntent.putExtra(TaskData.class.getCanonicalName(), new TaskData());
+            startActivityForResult (anIntent, REQUEST_CODE_TASK_DETAIL );
         }
     }
 
@@ -128,39 +138,35 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     public boolean onContextItemSelected( MenuItem item )
     {
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-        long aTaskId =  (Long) myData.get( info.position ).get( TaskData.LABEL_ID );
-        switch(item.getItemId()) {
+        TaskData aTask =  TaskData.valueOf( myData.get( info.position ) );
+        switch( item.getItemId() ) {
             case R.id.cm_item_list_set_executed:
+            {
                 // add stuff here
 
-                Toast.makeText( this, "position: " + info.position + " " + info.id, Toast.LENGTH_SHORT).show();
+                Toast.makeText( this, "position: " + info.position + " " + info.id, Toast.LENGTH_SHORT ).show();
                 return true;
+            }
             case R.id.cm_item_list_edit:
-                myTaskDetailIntent.putExtra( TaskData.LABEL_ID, aTaskId );
-                startActivityForResult( myTaskDetailIntent, REQUEST_CODE_TASK_DETAIL );
+            {
+                Intent anIntent = new Intent( this, TaskDetailActivity.class );
+                anIntent.putExtra( TaskData.class.getCanonicalName(), aTask );
+                startActivityForResult( anIntent, REQUEST_CODE_TASK_DETAIL );
                 return true;
+            }
             case R.id.cm_item_list_delete:
-                myContentProvider.removeTask( aTaskId );
+            {
+                myContentProvider.removeTask( aTask );
                 myData.remove( info.position );
                 myAdapter.notifyDataSetChanged();
                 return true;
+            }
             default:
                 return super.onContextItemSelected(item);
         }
     }
 
-    private ArrayList<Map<String, Object>> prepareData( ArrayList<TaskData> theTasks )
-    {
-        ArrayList<Map<String, Object>> res = new ArrayList<Map<String, Object>>();
-        for( TaskData aTask: theTasks )
-        {
-            res.add( aTask.toMap() );
-        }
-        return res;
-    }
-
     // private fields:
-    private Intent myTaskDetailIntent;
     private Button btnNewTask;
     private ListView lvTaskList;
     private ContentProvider myContentProvider;
