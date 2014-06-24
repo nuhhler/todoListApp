@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:id="@+id/cm_item_list_set_executed"
+        android:icon="@android:drawable/ic_menu_add"
+        android:title="@string/cm_item_list_set_executed_text" />
+
+    <item android:id="@+id/cm_item_list_edit"
+        android:icon="@android:drawable/ic_menu_edit"
+        android:title="@string/cm_item_list_edit_text" />
+
+    <item android:id="@+id/cm_item_list_delete"
+        android:icon="@android:drawable/ic_menu_delete"
+        android:title="@string/cm_item_list_delete_text" />
+
+</menu>

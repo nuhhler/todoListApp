@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">todoListApp</string>
+
+    <!-- MainActivity -->
+    <string name="titleText">Task list</string>
+    <string name="btnNewTaskText">New task</string>
+
+    <!-- MainActivity Menu -->
+    <string name="removeAll">Remove All Tasks</string>
+
+    <!-- MainActivity Context Menu -->
+    <string name="cm_item_list_set_executed_text">Mark as executed</string>
+    <string name="cm_item_list_set_not_executed_text">Mark as not executed</string>
+    <string name="cm_item_list_edit_text">Edit</string>
+    <string name="cm_item_list_delete_text">Delete</string>
+
+    <!-- TaskDetailActivity -->
+    <string name="newTaskDescText">Describe the task</string>
+    <string name="taskNameText">Name:</string>
+    <string name="taskDescriptionText">Description:</string>
+    <string name="taskPriorityText">Priority:</string>
+    <string name="rbtnLowPriorityText">Low</string>
+    <string name="rbtnNormalPriorityText">Normal</string>
+    <string name="rbtnHighPriorityText">High</string>
+    <string name="btnOkText">Ok</string>
+    <string name="btnCancelText">Cancel</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_task_detail">TaskDetailActivity</string>
+    <string name="emptyTaskNameText">Name is empty</string>
+
+    <!-- TaskDetailActivity/Dialog -->
+    <string name="dlg_title">Warning!</string>
+    <string name="dlg_text_confirm">Task with given name already exist. Do you want to create another one?</string>
+
+</resources>
