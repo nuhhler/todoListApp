@@ -20,29 +20,63 @@ public class TaskData implements Parcelable {
 
     public static final int INCORRECT_ID = -1;
 
-    public static final int PRIORITY_LOW = 1;
-    public static final int PRIORITY_NORMAL = 2;
-    public static final int PRIORITY_HIGH = 3;
+    public enum Priority
+    {
+        LOW, NORMAL, HIGH, INCORRECT;
+
+        public static Priority valueOf( int theValue )
+        {
+            if( theValue == LOW.ordinal() )
+                return LOW;
+            else if( theValue == NORMAL.ordinal() )
+                return NORMAL;
+            else if( theValue == HIGH.ordinal() )
+                return HIGH;
+            else
+                return INCORRECT;
+        }
+
+        public static Priority valueOf( byte theValue )
+        {
+            return valueOf( theValue );
+        }
+
+        public byte toByte()
+        {
+            return (byte) ordinal();
+        }
+    }
 
     /* ===================== constructors ===================== */
     public TaskData()
     {
         setId( INCORRECT_ID );
+        setPriority( Priority.INCORRECT );
+    }
+
+    public TaskData( String theName, String theDescription, Priority thePriority )
+    {
+        this();
+        setName( theName );
+        setDescription( theDescription );
+        setPriority( thePriority );
     }
 
     public TaskData( String theName, String theDescription, int thePriority)
     {
-        this();
-        setName(theName);
-        setDescription(theDescription);
-        setPriority(thePriority);
+        this( theName, theDescription, Priority.valueOf( thePriority ) );
     }
 
-    public TaskData( long theId, String theName, String theDescription, int thePriority, boolean theIsDone)
+    public TaskData( long theId, String theName, String theDescription, Priority thePriority, boolean theIsDone )
     {
-        this(theName, theDescription, thePriority);
-        setId(theId);
+        this( theName, theDescription, thePriority );
+        setId( theId );
         setDone( theIsDone );
+    }
+
+    public TaskData( long theId, String theName, String theDescription, int thePriority, boolean theIsDone )
+    {
+        this( theId, theName, theDescription, Priority.valueOf( thePriority ), theIsDone );
     }
 
     /* ===================== getters & setters ===================== */
@@ -54,13 +88,17 @@ public class TaskData implements Parcelable {
         this.name = name;
     }
 
-    public int getPriority()
+    public Priority getPriority()
     {
         return priority;
     }
 
-    public void setPriority( int priority ) {
+    public void setPriority( Priority priority ) {
         this.priority = priority;
+    }
+
+    public void setPriority( int priority ) {
+        setPriority( Priority.valueOf( priority ) );
     }
 
     public boolean isDone() {
@@ -94,16 +132,16 @@ public class TaskData implements Parcelable {
         setId( theInput.readLong() );
         setName( theInput.readString() );
         setDescription( theInput.readString() );
-        setPriority( theInput.readInt() );
+        setPriority( (int) theInput.readByte() );
         setDone( theInput.readByte() == 1 );
     }
 
     public void writeToParcel( Parcel theOutput, int flags )
     {
-        theOutput.writeLong(getId());
+        theOutput.writeLong( getId() );
         theOutput.writeString( getName() );
-        theOutput.writeString(getDescription());
-        theOutput.writeInt(getPriority());
+        theOutput.writeString( getDescription() );
+        theOutput.writeByte( getPriority().toByte() );
         theOutput.writeByte( (byte) (isDone() ? 1 : 0) );
     }
 
@@ -139,13 +177,11 @@ public class TaskData implements Parcelable {
 
     public static TaskData valueOf( Map<String, Object> aDataMap )
     {
-        TaskData res = new TaskData();
-        res.setId( (Long) aDataMap.get( LABEL_ID ) );
-        res.setName( (String) aDataMap.get( LABEL_NAME ) );
-        res.setDescription( (String) aDataMap.get( LABEL_DESCRIPTION ) );
-        res.setPriority( (Integer) aDataMap.get( LABEL_PRIORITY ) );
-        res.setDone( (Boolean) aDataMap.get( LABEL_IS_DONE ) );
-        return res;
+        return new TaskData( (Long) aDataMap.get( LABEL_ID ),
+                             (String) aDataMap.get( LABEL_NAME ),
+                             (String) aDataMap.get( LABEL_DESCRIPTION ),
+                             (Priority) aDataMap.get( LABEL_PRIORITY ),
+                             (Boolean) aDataMap.get( LABEL_IS_DONE ) );
     }
 
     public static ArrayList<Map<String, Object>> toArrayListOfMap( ArrayList<TaskData> theTasks )
@@ -194,6 +230,6 @@ public class TaskData implements Parcelable {
     private long id;
     private String name;
     private String description;
-    private int priority; // todo make enum
+    private Priority priority;
     private boolean isDone; // todo it would be better to make execution status of the task, make enum
 }

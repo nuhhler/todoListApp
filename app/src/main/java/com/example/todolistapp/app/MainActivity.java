@@ -113,8 +113,8 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         if( theView.getId() == R.id.btnNewTask )
         {
             Intent anIntent = new Intent( this, TaskDetailActivity.class );
-            anIntent.putExtra(TaskData.class.getCanonicalName(), new TaskData());
-            startActivityForResult (anIntent, REQUEST_CODE_TASK_DETAIL );
+            anIntent.putExtra( TaskData.class.getCanonicalName(), new TaskData() );
+            startActivityForResult ( anIntent, REQUEST_CODE_TASK_DETAIL );
         }
     }
 

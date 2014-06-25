@@ -43,20 +43,20 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
         rbgPriority.setOnClickListener( this );
 
         // restore values if user edits the existing task
-        myTask = getIntent().getParcelableExtra( TaskData.class.getCanonicalName() );
-        if( TaskData.isValid( myTask ) )
+        myTask = getIntent().getParcelableExtra(TaskData.class.getCanonicalName());
+        if( TaskData.isValid(myTask) )
         {
             etTaskName.setText( myTask.getName() );
             etTaskDescription.setText( myTask.getDescription() );
             switch ( myTask.getPriority() )
             {
-                case TaskData.PRIORITY_LOW:
+                case LOW:
                     rbgPriority.check( R.id.rbtnLowPriority );
                     break;
-                case TaskData.PRIORITY_NORMAL:
+                case NORMAL:
                     rbgPriority.check( R.id.rbtnNormalPriority );
                     break;
-                case TaskData.PRIORITY_HIGH:
+                case HIGH:
                     rbgPriority.check( R.id.rbtnHighPriority );
                     break;
             }
@@ -96,7 +96,7 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
                     return;
                 }
 
-                int nmb = myContentProvider.getNmbTasks( TaskData.LABEL_NAME, aName );
+                int nmb = myContentProvider.getNmbTasksWithName( aName );
                 if( nmb == 0 ||
                     nmb == 1 && isEditMode() && myTask.getName().equals( aName ) )
                 {
@@ -150,19 +150,19 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
     }
 
     // internal methods
-    private int getPriority()
+    private TaskData.Priority getPriority()
     {
-        int res = -1;
+        TaskData.Priority res = TaskData.Priority.INCORRECT;
         switch ( rbgPriority.getCheckedRadioButtonId() )
         {
             case R.id.rbtnLowPriority:
-                res = TaskData.PRIORITY_LOW;
+                res = TaskData.Priority.LOW;
                 break;
             case R.id.rbtnNormalPriority:
-                res = TaskData.PRIORITY_NORMAL;
+                res = TaskData.Priority.NORMAL;
                 break;
             case R.id.rbtnHighPriority:
-                res = TaskData.PRIORITY_HIGH;
+                res = TaskData.Priority.HIGH;
                 break;
         }
         return res;
@@ -178,13 +178,14 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
         Intent anIntent = new Intent();
         int result;
 
-        // insert new task to database
+
         if ( isEditMode() )
         {
             result = RESULT_EDITED;
             myTask.setName( etTaskName.getText().toString() );
             myTask.setDescription( etTaskDescription.getText().toString() );
             myTask.setPriority( getPriority() );
+            myContentProvider.update( myTask );
         }
         else
         {
@@ -198,9 +199,8 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
 
         // send result
         anIntent.putExtra( TaskData.class.getCanonicalName(), myTask );
-        myTask = null;
-
         setResult( result, anIntent );
+        myTask = null;
         finish();
     }
 
