@@ -12,7 +12,7 @@ import java.util.Map;
  */
 public class TaskData implements Parcelable {
 
-    public static final String LABEL_ID = "id"; // todo it is necessary to rename to "_id" if you want to use cursor adapter
+    public static final String LABEL_ID = "_id";
     public static final String LABEL_NAME = "name";
     public static final String LABEL_DESCRIPTION = "description";
     public static final String LABEL_PRIORITY = "priority";
@@ -164,33 +164,61 @@ public class TaskData implements Parcelable {
     };
 
     /* ===================== data exchange ===================== */
-    public Map<String, Object> toMap()
-    {
-        HashMap<String, Object> aDataMap = new HashMap <String, Object>();
-        aDataMap.put( LABEL_ID, getId() );
-        aDataMap.put( LABEL_NAME, getName() );
-        aDataMap.put( LABEL_DESCRIPTION, getDescription() );
-        aDataMap.put( LABEL_PRIORITY, getPriority() );
-        aDataMap.put( LABEL_IS_DONE, isDone() );
-        return aDataMap;
-    }
-
-    public static TaskData valueOf( Map<String, Object> aDataMap )
-    {
-        return new TaskData( (Long) aDataMap.get( LABEL_ID ),
-                             (String) aDataMap.get( LABEL_NAME ),
-                             (String) aDataMap.get( LABEL_DESCRIPTION ),
-                             (Priority) aDataMap.get( LABEL_PRIORITY ),
-                             (Boolean) aDataMap.get( LABEL_IS_DONE ) );
-    }
-
-    public static ArrayList<Map<String, Object>> toArrayListOfMap( ArrayList<TaskData> theTasks )
-    {
-        ArrayList<Map<String, Object>> res = new ArrayList<Map<String, Object>>();
-        for( TaskData aTask: theTasks )
+    static class Info extends HashMap<String, Object> {
+        Info( TaskData theTask )
         {
-            res.add( aTask.toMap() );
+            if ( TaskData.isValid( theTask ) )
+            {
+                put( LABEL_ID, theTask.getId() );
+                put( LABEL_NAME, theTask.getName() );
+                put( LABEL_DESCRIPTION, theTask.getDescription() );
+                put( LABEL_PRIORITY, theTask.getPriority() );
+                put( LABEL_IS_DONE, theTask.isDone() );
+            }
+            else
+            {
+                put(LABEL_ID, TaskData.INCORRECT_ID );
+            }
         }
+
+        // @override
+        public boolean equals( Object o )
+        {
+            if ( this == o ) return true;
+            if ( o == null ) return false;
+
+            if( getClass() == o.getClass() ) {
+                Info info = (Info) o;
+                return get(LABEL_ID) == info.get(LABEL_ID);
+            }
+            else if( o instanceof TaskData )
+            {
+                TaskData aData = (TaskData) o;
+                return (Long)get(LABEL_ID) == aData.getId();
+            }
+            else
+                return false;
+        }
+    };
+
+    TaskData ( Info theInfo )
+    {
+        this();
+        if( TaskData.isValid( theInfo ) )
+        {
+            setId( (Long) theInfo.get(LABEL_ID) );
+            setName( (String) theInfo.get(LABEL_NAME) );
+            setDescription( (String) theInfo.get(LABEL_DESCRIPTION) );
+            setPriority( (Priority) theInfo.get(LABEL_PRIORITY) );
+            setDone( (Boolean) theInfo.get(LABEL_IS_DONE) );
+        }
+    }
+
+    public static ArrayList<TaskData.Info> toTaskInfoList( ArrayList<TaskData> theTasks )
+    {
+        ArrayList<TaskData.Info> res = new ArrayList<TaskData.Info>();
+        for( TaskData aTask: theTasks )
+            res.add( new Info( aTask) );
         return res;
     }
 
@@ -198,11 +226,21 @@ public class TaskData implements Parcelable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if ( this == o ) return true;
+        if ( o == null ) return false;
 
-        TaskData taskData = (TaskData) o;
-        return id == taskData.id;
+        if( getClass() == o.getClass() )
+        {
+            TaskData aData = (TaskData) o;
+            return getId() == aData.getId();
+        }
+        else if( o instanceof Info )
+        {
+            Info info = (Info) o;
+            return (Long)info.get(LABEL_ID) == getId();
+        }
+        else
+            return false;
     }
 
     @Override
@@ -210,14 +248,14 @@ public class TaskData implements Parcelable {
         return (int) (id ^ (id >>> 32));
     }
 
-    boolean isValid()
-    {
-        return getId() != INCORRECT_ID;
-    }
-
     public static boolean isValid( TaskData theTask )
     {
-        return theTask != null && theTask.isValid();
+        return theTask != null && theTask.getId() != INCORRECT_ID;
+    }
+
+    public static boolean isValid( Info theInfo )
+    {
+        return theInfo != null && (Long)theInfo.get(LABEL_ID) != INCORRECT_ID;
     }
 
     /* ===================== private fields ===================== */

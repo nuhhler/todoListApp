@@ -39,12 +39,12 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         String[] from = new String[] { TaskData.LABEL_NAME, TaskData.LABEL_DESCRIPTION };
         int[] to = new int[] { R.id.tvItemTaskName, R.id.tvItemTaskDesc };
 
-        myData = TaskData.toArrayListOfMap(myContentProvider.getTasks());
+        myData = TaskData.toTaskInfoList(myContentProvider.getTasks());
         myAdapter = new SimpleAdapter( this, myData, R.layout.task_item_list, from, to );
-        aLVTaskList.setAdapter(myAdapter);
+        aLVTaskList.setAdapter( myAdapter );
 
         // register events
-        aBtnNewTask.setOnClickListener(this);
+        aBtnNewTask.setOnClickListener( this );
         registerForContextMenu(aLVTaskList);
 
     }
@@ -60,7 +60,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         if ( theRequestCode == REQUEST_CODE_TASK_DETAIL && theResultCode == TaskDetailActivity.RESULT_NEW )
         {
             TaskData aTask = theData.getParcelableExtra( TaskData.class.getCanonicalName() );
-            myData.add( aTask.toMap() );
+            myData.add( new TaskData.Info( aTask ) );
             myAdapter.notifyDataSetChanged();
         }
         else if ( theRequestCode == REQUEST_CODE_TASK_DETAIL && theResultCode == TaskDetailActivity.RESULT_EDITED )
@@ -72,15 +72,13 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 return;
             }
 
-            for( Map<String, Object> aChangedTaskInfo : myData )
+            TaskData.Info anInfo = new TaskData.Info( aTask );
+            int idx = myData.indexOf( anInfo );
+            if( idx != -1 )
             {
-                if( (Long)aChangedTaskInfo.get(TaskData.LABEL_ID) == aTask.getId() ) {
-                    aChangedTaskInfo.clear();
-                    aChangedTaskInfo.putAll( aTask.toMap() );
-                    myAdapter.notifyDataSetChanged();
-                    break;
-                }
+                myData.set( idx, anInfo );
             }
+            myAdapter.notifyDataSetChanged();
         }
     }
 
@@ -137,7 +135,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     public boolean onContextItemSelected( MenuItem item )
     {
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-        TaskData aTask =  TaskData.valueOf( myData.get( info.position ) );
+        TaskData aTask =  new TaskData( myData.get( info.position ) );
         switch( item.getItemId() ) {
             case R.id.cm_item_list_set_executed:
             {
@@ -168,5 +166,5 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     // private fields:
     private ContentProvider myContentProvider;
     private SimpleAdapter myAdapter;
-    private ArrayList<Map<String, Object>> myData;
+    private ArrayList<TaskData.Info> myData;
 }
