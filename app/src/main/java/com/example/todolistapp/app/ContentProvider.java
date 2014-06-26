@@ -13,8 +13,8 @@ import java.util.ArrayList;
  */
 public class ContentProvider
 {
-    public static final String DB_NAME = "todoListApp_DB";
-    public static final String TABLE_NAME = "todoList_Table";
+    private static final String DB_NAME = "todoListApp_DB";
+    private static final String TABLE_NAME = "todoList_Table";
 
     private static ContentProvider ourInstance = null ;
 
@@ -30,13 +30,12 @@ public class ContentProvider
 
         // get indexes of columns
         Cursor c = myDataBase.query( TABLE_NAME, null, null, null, null, null, null );
-        myIdColIndex = c.getColumnIndex( TaskData.LABEL_ID);
-        myNameColIndex = c.getColumnIndex( TaskData.LABEL_NAME);
-        myDescriptionColIndex = c.getColumnIndex( TaskData.LABEL_DESCRIPTION);
-        myPriorityColIndex = c.getColumnIndex( TaskData.LABEL_PRIORITY);
-        myIsDoneColIndex = c.getColumnIndex( TaskData.LABEL_IS_DONE);
+        myIdColIndex = c.getColumnIndex( TaskData.LABEL_ID );
+        myNameColIndex = c.getColumnIndex( TaskData.LABEL_NAME );
+        myDescriptionColIndex = c.getColumnIndex( TaskData.LABEL_DESCRIPTION );
+        myPriorityColIndex = c.getColumnIndex( TaskData.LABEL_PRIORITY );
+        myIsDoneColIndex = c.getColumnIndex( TaskData.LABEL_IS_DONE );
         c.close();
-
     }
 
     public static void initialize( Context theContext )
@@ -120,7 +119,7 @@ public class ContentProvider
 
     public int removeTask( TaskData theTask )
     {
-        return removeTaskById(theTask.getId());
+        return removeTaskById( theTask.getId() );
     }
 
     /* ===================== internal protected methods ===================== */
@@ -149,10 +148,9 @@ public class ContentProvider
 
     protected int getNmbTasks( String theColumn, String[] theValues)
     {
-        int res = 0;
         String aSelection = theColumn + " = ?";
         Cursor aCursor = myDataBase.query( TABLE_NAME, null, aSelection, theValues, null, null, null );
-        res = aCursor.getCount();
+        int res = aCursor.getCount();
         aCursor.close();
         return res;
     }
@@ -164,19 +162,19 @@ public class ContentProvider
                               theCursor.getString( myNameColIndex ),
                               theCursor.getString( myDescriptionColIndex ),
                               theCursor.getInt( myPriorityColIndex ),
-                              theCursor.getInt( myIsDoneColIndex ) == 1 ? true : false );
+                              theCursor.getInt( myIsDoneColIndex ) == 1 );
     }
 
     /* ===================== private fields ===================== */
-    private DBHelper myDBHelper;
-    private SQLiteDatabase myDataBase;
+    private final DBHelper myDBHelper;
+    private final SQLiteDatabase myDataBase;
 
     // column indexes
-    private int myIdColIndex;
-    private int myNameColIndex;
-    private int myDescriptionColIndex;
-    private int myPriorityColIndex;
-    private int myIsDoneColIndex;
+    private final int myIdColIndex;
+    private final int myNameColIndex;
+    private final int myDescriptionColIndex;
+    private final int myPriorityColIndex;
+    private final int myIsDoneColIndex;
 
     /* ===================== internal classes ===================== */
     class DBHelper extends SQLiteOpenHelper

@@ -15,13 +15,12 @@ import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Map;
 
 
 public class MainActivity extends ActionBarActivity implements View.OnClickListener {
 
-    final int REQUEST_CODE_TASK_DETAIL = 1;
+    private static final int REQUEST_CODE_TASK_DETAIL = 1;
 
     @Override
     protected void onCreate( Bundle savedInstanceState )
@@ -33,8 +32,8 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         myContentProvider = ContentProvider.getInstance();
 
         // get Views
-        btnNewTask = (Button)findViewById( R.id.btnNewTask );
-        lvTaskList = (ListView)findViewById( R.id.lvTaskList );
+        Button aBtnNewTask = (Button)findViewById( R.id.btnNewTask );
+        ListView aLVTaskList = (ListView)findViewById( R.id.lvTaskList );
 
         // fill task list
         String[] from = new String[] { TaskData.LABEL_NAME, TaskData.LABEL_DESCRIPTION };
@@ -42,11 +41,11 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
         myData = TaskData.toArrayListOfMap(myContentProvider.getTasks());
         myAdapter = new SimpleAdapter( this, myData, R.layout.task_item_list, from, to );
-        lvTaskList.setAdapter( myAdapter );
+        aLVTaskList.setAdapter(myAdapter);
 
         // register events
-        btnNewTask.setOnClickListener(this);
-        registerForContextMenu(lvTaskList);
+        aBtnNewTask.setOnClickListener(this);
+        registerForContextMenu(aLVTaskList);
 
     }
 
@@ -167,9 +166,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     }
 
     // private fields:
-    private Button btnNewTask;
-    private ListView lvTaskList;
     private ContentProvider myContentProvider;
-    SimpleAdapter myAdapter;
-    ArrayList<Map<String, Object>> myData;
+    private SimpleAdapter myAdapter;
+    private ArrayList<Map<String, Object>> myData;
 }

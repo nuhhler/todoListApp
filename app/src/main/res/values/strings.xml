@@ -24,8 +24,6 @@
     <string name="rbtnLowPriorityText">Low</string>
     <string name="rbtnNormalPriorityText">Normal</string>
     <string name="rbtnHighPriorityText">High</string>
-    <string name="btnOkText">Ok</string>
-    <string name="btnCancelText">Cancel</string>
     <string name="action_settings">Settings</string>
     <string name="title_activity_task_detail">TaskDetailActivity</string>
     <string name="emptyTaskNameText">Name is empty</string>

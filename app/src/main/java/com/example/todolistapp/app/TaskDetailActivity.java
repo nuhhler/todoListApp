@@ -24,7 +24,7 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
     public static final int RESULT_NEW = 100;
     public static final int RESULT_EDITED = 101;
 
-    public static final int DIALOG_CONFIRM = 1;
+    private static final int DIALOG_CONFIRM = 1;
 
     @Override
     protected void onCreate( Bundle savedInstanceState )
@@ -37,13 +37,13 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
         // get Views
         etTaskName = (EditText)findViewById(R.id.etTaskName);
         etTaskDescription = (EditText)findViewById(R.id.etTaskDescription);
-        btnOk = (Button)findViewById(R.id.btnOk);
-        btnCancel = (Button)findViewById(R.id.btnCancel);
+        Button aBtnOk = (Button)findViewById(R.id.btnOk);
+        Button aBtnCancel = (Button)findViewById(R.id.btnCancel);
         rbgPriority = (RadioGroup)findViewById(R.id.rbgPriority);
 
         // set listeners
-        btnOk.setOnClickListener(this);
-        btnCancel.setOnClickListener(this);
+        aBtnOk.setOnClickListener(this);
+        aBtnCancel.setOnClickListener(this);
         rbgPriority.setOnClickListener( this );
 
         // restore values if user edits the existing task
@@ -81,11 +81,7 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+        return item.getItemId() == R.id.action_settings || super.onOptionsItemSelected(item);
     }
 
     public void onClick( View theView )
@@ -145,8 +141,8 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
             builder.setMessage( R.string.dlg_text_confirm );
             builder.setIcon( android.R.drawable.ic_dialog_info );
 
-            builder.setPositiveButton( R.string.btnOkText, this );
-            builder.setNegativeButton( R.string.btnCancelText, this );
+            builder.setPositiveButton( android.R.string.ok, this );
+            builder.setNegativeButton( android.R.string.cancel, this );
 
             return builder.create();
         }
@@ -209,8 +205,6 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
     }
 
     /* ===================== private fields ===================== */
-    private Button btnOk;
-    private Button btnCancel;
     private RadioGroup rbgPriority;
     private EditText etTaskName;
     private EditText etTaskDescription;

@@ -38,7 +38,7 @@ public class TaskData implements Parcelable {
 
         public static Priority valueOf( byte theValue )
         {
-            return valueOf( theValue );
+            return valueOf( (int) theValue );
         }
 
         public byte toByte()
@@ -219,12 +219,6 @@ public class TaskData implements Parcelable {
     {
         return theTask != null && theTask.isValid();
     }
-
-    public static boolean isValidId( long theId )
-    {
-        return theId != INCORRECT_ID;
-    }
-
 
     /* ===================== private fields ===================== */
     private long id;
