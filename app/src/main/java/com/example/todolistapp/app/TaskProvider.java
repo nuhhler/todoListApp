@@ -11,19 +11,19 @@ import java.util.ArrayList;
 /**
  * Created by sdv on 11.06.14.
  */
-public class ContentProvider
+public class TaskProvider
 {
     private static final String DB_NAME = "todoListApp_DB";
     private static final String TABLE_NAME = "todoList_Table";
 
-    private static ContentProvider ourInstance = null ;
+    private static TaskProvider ourInstance = null ;
 
     /* ===================== access and initialize methods ===================== */
-    public static ContentProvider getInstance() {
+    public static TaskProvider getInstance() {
         return ourInstance;
     }
 
-    private ContentProvider( Context theContext )
+    private TaskProvider(Context theContext)
     {
         myDBHelper = new DBHelper( theContext );
         myDataBase = myDBHelper.getWritableDatabase();
@@ -43,7 +43,7 @@ public class ContentProvider
         if( ourInstance != null )
             return;
 
-        ourInstance = new ContentProvider( theContext );
+        ourInstance = new TaskProvider( theContext );
     }
 
     public void close()

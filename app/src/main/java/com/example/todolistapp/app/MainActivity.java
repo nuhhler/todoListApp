@@ -27,8 +27,8 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         super.onCreate( savedInstanceState );
         setContentView( R.layout.activity_main );
 
-        ContentProvider.initialize( this );
-        myContentProvider = ContentProvider.getInstance();
+        TaskProvider.initialize(this);
+        myTaskProvider = TaskProvider.getInstance();
 
         // get Views
         Button aBtnNewTask = (Button)findViewById( R.id.btnNewTask );
@@ -38,7 +38,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         String[] from = new String[] { Task.LABEL_NAME, Task.LABEL_DESCRIPTION };
         int[] to = new int[] { R.id.tvItemTaskName, R.id.tvItemTaskDesc };
 
-        myData = Task.toTaskAdapterList(myContentProvider.getTasks());
+        myData = Task.toTaskAdapterList(myTaskProvider.getTasks());
         myAdapter = new SimpleAdapter( this, myData, R.layout.task_item_list, from, to );
         aLVTaskList.setAdapter( myAdapter );
 
@@ -51,7 +51,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     protected void onDestroy()
     {
         super.onDestroy();
-        myContentProvider.close();
+        myTaskProvider.close();
     }
 
     protected void onActivityResult( int theRequestCode, int theResultCode, Intent theData )
@@ -90,7 +90,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     {
         int id = item.getItemId();
         if ( id == R.id.action_removeAll ) {
-            if( myContentProvider.removeTasks() != 0 )
+            if( myTaskProvider.removeTasks() != 0 )
             {
                 myData.clear();
                 myAdapter.notifyDataSetChanged();
@@ -148,7 +148,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             }
             case R.id.cm_item_list_delete:
             {
-                myContentProvider.removeTask( aTask );
+                myTaskProvider.removeTask( aTask );
                 myData.remove( info.position );
                 myAdapter.notifyDataSetChanged();
                 return true;
@@ -159,7 +159,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     }
 
     // private fields:
-    private ContentProvider myContentProvider;
+    private TaskProvider myTaskProvider;
     private SimpleAdapter myAdapter;
     private ArrayList<Task.Adapter> myData;
 }

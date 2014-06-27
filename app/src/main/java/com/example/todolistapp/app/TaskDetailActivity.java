@@ -32,7 +32,7 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
         super.onCreate( savedInstanceState );
         setContentView( R.layout.activity_task_detail );
 
-        myContentProvider = ContentProvider.getInstance();
+        myTaskProvider = TaskProvider.getInstance();
 
         // get Views
         etTaskName = (EditText)findViewById(R.id.etTaskName);
@@ -96,7 +96,7 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
                     return;
                 }
 
-                int nmb = myContentProvider.getNmbTasksWithName( aName );
+                int nmb = myTaskProvider.getNmbTasksWithName( aName );
                 if( nmb == 0 ||
                     nmb == 1 && isEditMode() && myTask.getName().equals( aName ) )
                 {
@@ -185,7 +185,7 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
             myTask.setName( etTaskName.getText().toString() );
             myTask.setDescription( etTaskDescription.getText().toString() );
             myTask.setPriority( getPriority() );
-            myContentProvider.update( myTask );
+            myTaskProvider.update( myTask );
         }
         else
         {
@@ -193,7 +193,7 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
             myTask = new Task( etTaskName.getText().toString(),
                                    etTaskDescription.getText().toString(),
                                    getPriority() );
-            long anId = myContentProvider.insert( myTask );
+            long anId = myTaskProvider.insert( myTask );
             myTask.setId( anId );
         }
 
@@ -208,7 +208,7 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
     private RadioGroup rbgPriority;
     private EditText etTaskName;
     private EditText etTaskDescription;
-    private ContentProvider myContentProvider;
+    private TaskProvider myTaskProvider;
     private Task myTask;
 
 }
