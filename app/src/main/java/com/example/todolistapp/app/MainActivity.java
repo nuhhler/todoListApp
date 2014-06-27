@@ -15,7 +15,6 @@ import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.Map;
 
 
 public class MainActivity extends ActionBarActivity implements View.OnClickListener {
@@ -36,10 +35,10 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         ListView aLVTaskList = (ListView)findViewById( R.id.lvTaskList );
 
         // fill task list
-        String[] from = new String[] { TaskData.LABEL_NAME, TaskData.LABEL_DESCRIPTION };
+        String[] from = new String[] { Task.LABEL_NAME, Task.LABEL_DESCRIPTION };
         int[] to = new int[] { R.id.tvItemTaskName, R.id.tvItemTaskDesc };
 
-        myData = TaskData.toTaskInfoList(myContentProvider.getTasks());
+        myData = Task.toTaskAdapterList(myContentProvider.getTasks());
         myAdapter = new SimpleAdapter( this, myData, R.layout.task_item_list, from, to );
         aLVTaskList.setAdapter( myAdapter );
 
@@ -55,30 +54,26 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         myContentProvider.close();
     }
 
-    protected void onActivityResult(int theRequestCode, int theResultCode, Intent theData)
+    protected void onActivityResult( int theRequestCode, int theResultCode, Intent theData )
     {
-        if ( theRequestCode == REQUEST_CODE_TASK_DETAIL && theResultCode == TaskDetailActivity.RESULT_NEW )
+        if ( theRequestCode == REQUEST_CODE_TASK_DETAIL &&
+             theResultCode == TaskDetailActivity.RESULT_NEW )
         {
-            TaskData aTask = theData.getParcelableExtra( TaskData.class.getCanonicalName() );
-            myData.add( new TaskData.Info( aTask ) );
+            Task aTask = theData.getParcelableExtra( Task.class.getCanonicalName() );
+            myData.add( new Task.Adapter( aTask ) );
             myAdapter.notifyDataSetChanged();
         }
-        else if ( theRequestCode == REQUEST_CODE_TASK_DETAIL && theResultCode == TaskDetailActivity.RESULT_EDITED )
+        else if ( theRequestCode == REQUEST_CODE_TASK_DETAIL &&
+                  theResultCode == TaskDetailActivity.RESULT_EDITED )
         {
-            TaskData aTask = theData.getParcelableExtra( TaskData.class.getCanonicalName() );
-            if( !TaskData.isValid( aTask ) )
-            {
-                // todo throw exception
-                return;
-            }
-
-            TaskData.Info anInfo = new TaskData.Info( aTask );
-            int idx = myData.indexOf( anInfo );
+            Task aTask = theData.getParcelableExtra( Task.class.getCanonicalName() );
+            Task.Adapter anAdapter = new Task.Adapter( aTask );
+            int idx = myData.indexOf(anAdapter);
             if( idx != -1 )
             {
-                myData.set( idx, anInfo );
+                myData.set( idx, anAdapter);
+                myAdapter.notifyDataSetChanged();
             }
-            myAdapter.notifyDataSetChanged();
         }
     }
 
@@ -110,7 +105,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         if( theView.getId() == R.id.btnNewTask )
         {
             Intent anIntent = new Intent( this, TaskDetailActivity.class );
-            anIntent.putExtra( TaskData.class.getCanonicalName(), new TaskData() );
+            anIntent.putExtra( Task.class.getCanonicalName(), new Task() );
             startActivityForResult ( anIntent, REQUEST_CODE_TASK_DETAIL );
         }
     }
@@ -135,7 +130,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     public boolean onContextItemSelected( MenuItem item )
     {
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-        TaskData aTask =  new TaskData( myData.get( info.position ) );
+        Task aTask =  new Task( myData.get( info.position ) );
         switch( item.getItemId() ) {
             case R.id.cm_item_list_set_executed:
             {
@@ -147,7 +142,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             case R.id.cm_item_list_edit:
             {
                 Intent anIntent = new Intent( this, TaskDetailActivity.class );
-                anIntent.putExtra( TaskData.class.getCanonicalName(), aTask );
+                anIntent.putExtra( Task.class.getCanonicalName(), aTask );
                 startActivityForResult( anIntent, REQUEST_CODE_TASK_DETAIL );
                 return true;
             }
@@ -166,5 +161,5 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     // private fields:
     private ContentProvider myContentProvider;
     private SimpleAdapter myAdapter;
-    private ArrayList<TaskData.Info> myData;
+    private ArrayList<Task.Adapter> myData;
 }

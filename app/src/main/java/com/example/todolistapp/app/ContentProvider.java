@@ -30,11 +30,11 @@ public class ContentProvider
 
         // get indexes of columns
         Cursor c = myDataBase.query( TABLE_NAME, null, null, null, null, null, null );
-        myIdColIndex = c.getColumnIndex( TaskData.LABEL_ID );
-        myNameColIndex = c.getColumnIndex( TaskData.LABEL_NAME );
-        myDescriptionColIndex = c.getColumnIndex( TaskData.LABEL_DESCRIPTION );
-        myPriorityColIndex = c.getColumnIndex( TaskData.LABEL_PRIORITY );
-        myIsDoneColIndex = c.getColumnIndex( TaskData.LABEL_IS_DONE );
+        myIdColIndex = c.getColumnIndex( Task.LABEL_ID );
+        myNameColIndex = c.getColumnIndex( Task.LABEL_NAME );
+        myDescriptionColIndex = c.getColumnIndex( Task.LABEL_DESCRIPTION );
+        myPriorityColIndex = c.getColumnIndex( Task.LABEL_PRIORITY );
+        myIsDoneColIndex = c.getColumnIndex( Task.LABEL_IS_DONE );
         c.close();
     }
 
@@ -52,38 +52,38 @@ public class ContentProvider
     }
 
     /* ===================== methods for work with database ===================== */
-    public long insert( TaskData theTask )
+    public long insert( Task theTask )
     {
         ContentValues aCV = new ContentValues();
-        if( theTask.getId() != TaskData.INCORRECT_ID )
+        if( theTask.getId() != Task.INCORRECT_ID )
         {
-            aCV.put( TaskData.LABEL_ID, theTask.getId() );
+            aCV.put( Task.LABEL_ID, theTask.getId() );
         }
-        aCV.put( TaskData.LABEL_NAME, theTask.getName() );
-        aCV.put( TaskData.LABEL_DESCRIPTION, theTask.getDescription() );
-        aCV.put( TaskData.LABEL_PRIORITY, theTask.getPriority().ordinal() );
-        aCV.put( TaskData.LABEL_IS_DONE, theTask.isDone() ? 1 : 0 );
+        aCV.put( Task.LABEL_NAME, theTask.getName() );
+        aCV.put( Task.LABEL_DESCRIPTION, theTask.getDescription() );
+        aCV.put( Task.LABEL_PRIORITY, theTask.getPriority().ordinal() );
+        aCV.put( Task.LABEL_IS_DONE, theTask.isDone() ? 1 : 0 );
 
         return myDataBase.insert( TABLE_NAME, null, aCV );
     }
 
-    public int update( TaskData theTask )
+    public int update( Task theTask )
     {
         ContentValues aCV = new ContentValues();
-        aCV.put( TaskData.LABEL_NAME, theTask.getName() );
-        aCV.put( TaskData.LABEL_DESCRIPTION, theTask.getDescription() );
-        aCV.put( TaskData.LABEL_PRIORITY, theTask.getPriority().ordinal() );
-        aCV.put( TaskData.LABEL_IS_DONE, theTask.isDone() ? 1 : 0 );
+        aCV.put( Task.LABEL_NAME, theTask.getName() );
+        aCV.put( Task.LABEL_DESCRIPTION, theTask.getDescription() );
+        aCV.put( Task.LABEL_PRIORITY, theTask.getPriority().ordinal() );
+        aCV.put( Task.LABEL_IS_DONE, theTask.isDone() ? 1 : 0 );
 
-        String aSelection = TaskData.LABEL_ID + " = ?";
+        String aSelection = Task.LABEL_ID + " = ?";
         String[]aSelectionArgs = new String[] { String.valueOf( theTask.getId() ) };
 
-        return myDataBase.update( TABLE_NAME, aCV, aSelection, aSelectionArgs );
+        return myDataBase.update(TABLE_NAME, aCV, aSelection, aSelectionArgs);
     }
 
-    public ArrayList<TaskData> getTasks()
+    public ArrayList<Task> getTasks()
     {
-        ArrayList<TaskData> res = new ArrayList<TaskData>();
+        ArrayList<Task> res = new ArrayList<Task>();
         Cursor aCursor = myDataBase.query( TABLE_NAME, null, null, null, null, null, null );
         if ( aCursor.moveToFirst() )
         {
@@ -97,35 +97,30 @@ public class ContentProvider
         return res;
     }
 
-    public TaskData getTaskById( long theId )
-    {
-        return getTasks( TaskData.LABEL_ID, new String[] { String.valueOf(theId) } ).get( 0 );
-    }
-
     public int getNmbTasksWithName( String theName )
     {
-        return getNmbTasks( TaskData.LABEL_NAME, new String[] { theName } );
+        return getNmbTasks(Task.LABEL_NAME, new String[]{theName});
     }
 
     public int removeTasks()
     {
-        return myDataBase.delete( TABLE_NAME, null, null );
+        return myDataBase.delete(TABLE_NAME, null, null);
     }
 
     public int removeTaskById( long theId )
     {
-        return removeTasks( TaskData.LABEL_ID, new String[] { String.valueOf( theId ) } );
+        return removeTasks(Task.LABEL_ID, new String[]{String.valueOf(theId)});
     }
 
-    public int removeTask( TaskData theTask )
+    public int removeTask( Task theTask )
     {
-        return removeTaskById( theTask.getId() );
+        return removeTaskById(theTask.getId());
     }
 
     /* ===================== internal protected methods ===================== */
-    protected ArrayList<TaskData> getTasks( String theColumn, String[] theValues)
+    protected ArrayList<Task> getTasks( String theColumn, String[] theValues)
     {
-        ArrayList<TaskData> res = new ArrayList<TaskData>();
+        ArrayList<Task> res = new ArrayList<Task>();
         String aSelection = theColumn + " = ?";
         Cursor aCursor = myDataBase.query( TABLE_NAME, null, aSelection, theValues, null, null, null );
         if ( aCursor.moveToFirst() )
@@ -149,16 +144,16 @@ public class ContentProvider
     protected int getNmbTasks( String theColumn, String[] theValues)
     {
         String aSelection = theColumn + " = ?";
-        Cursor aCursor = myDataBase.query( TABLE_NAME, null, aSelection, theValues, null, null, null );
+        Cursor aCursor = myDataBase.query(TABLE_NAME, null, aSelection, theValues, null, null, null);
         int res = aCursor.getCount();
         aCursor.close();
         return res;
     }
 
     /* ===================== internal private methods ===================== */
-    private TaskData readTask( Cursor theCursor )
+    private Task readTask( Cursor theCursor )
     {
-        return  new TaskData( theCursor.getLong( myIdColIndex ),
+        return  new Task( theCursor.getLong( myIdColIndex ),
                               theCursor.getString( myNameColIndex ),
                               theCursor.getString( myDescriptionColIndex ),
                               theCursor.getInt( myPriorityColIndex ),
@@ -187,11 +182,11 @@ public class ContentProvider
         public void onCreate( SQLiteDatabase db )
         {
             String anInitStr = "CREATE TABLE " + TABLE_NAME + " ("
-                    + TaskData.LABEL_ID + " integer primary key autoincrement,"
-                    + TaskData.LABEL_NAME + " text,"
-                    + TaskData.LABEL_DESCRIPTION + " text,"
-                    + TaskData.LABEL_PRIORITY + " integer,"
-                    + TaskData.LABEL_IS_DONE + " integer"
+                    + Task.LABEL_ID + " integer primary key autoincrement,"
+                    + Task.LABEL_NAME + " text,"
+                    + Task.LABEL_DESCRIPTION + " text,"
+                    + Task.LABEL_PRIORITY + " integer,"
+                    + Task.LABEL_IS_DONE + " integer"
                     + ");";
 
             db.execSQL( anInitStr );

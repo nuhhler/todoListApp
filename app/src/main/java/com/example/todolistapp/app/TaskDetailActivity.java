@@ -47,8 +47,8 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
         rbgPriority.setOnClickListener( this );
 
         // restore values if user edits the existing task
-        myTask = getIntent().getParcelableExtra(TaskData.class.getCanonicalName());
-        if( TaskData.isValid(myTask) )
+        myTask = getIntent().getParcelableExtra(Task.class.getCanonicalName());
+        if( Task.isValid(myTask) )
         {
             etTaskName.setText( myTask.getName() );
             etTaskDescription.setText( myTask.getDescription() );
@@ -149,20 +149,20 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
         return super.onCreateDialog( theId );
     }
 
-    // internal methods
-    private TaskData.Priority getPriority()
+    /* ===================== internal methods ===================== */
+    private Task.Priority getPriority()
     {
-        TaskData.Priority res = TaskData.Priority.INCORRECT;
+        Task.Priority res = Task.Priority.INCORRECT;
         switch ( rbgPriority.getCheckedRadioButtonId() )
         {
             case R.id.rbtnLowPriority:
-                res = TaskData.Priority.LOW;
+                res = Task.Priority.LOW;
                 break;
             case R.id.rbtnNormalPriority:
-                res = TaskData.Priority.NORMAL;
+                res = Task.Priority.NORMAL;
                 break;
             case R.id.rbtnHighPriority:
-                res = TaskData.Priority.HIGH;
+                res = Task.Priority.HIGH;
                 break;
         }
         return res;
@@ -170,7 +170,7 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
 
     private boolean isEditMode()
     {
-        return TaskData.isValid( myTask );
+        return Task.isValid(myTask);
     }
 
     private void executeOperation()
@@ -190,7 +190,7 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
         else
         {
             result = RESULT_NEW;
-            myTask = new TaskData( etTaskName.getText().toString(),
+            myTask = new Task( etTaskName.getText().toString(),
                                    etTaskDescription.getText().toString(),
                                    getPriority() );
             long anId = myContentProvider.insert( myTask );
@@ -198,7 +198,7 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
         }
 
         // send result
-        anIntent.putExtra( TaskData.class.getCanonicalName(), myTask );
+        anIntent.putExtra( Task.class.getCanonicalName(), myTask );
         setResult( result, anIntent );
         myTask = null;
         finish();
@@ -209,6 +209,6 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
     private EditText etTaskName;
     private EditText etTaskDescription;
     private ContentProvider myContentProvider;
-    private TaskData myTask;
+    private Task myTask;
 
 }
