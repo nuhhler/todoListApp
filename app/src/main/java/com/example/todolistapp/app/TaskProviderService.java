@@ -43,7 +43,7 @@ public class TaskProviderService extends Service
         myIsDoneColIndex = c.getColumnIndex( Task.LABEL_IS_DONE );
         c.close();
 
-        myData = Task.toTaskAdapterList( getTasks() );
+        myData = getTasks();
 
         String[] from = new String[] { Task.LABEL_NAME, Task.LABEL_DESCRIPTION };
         int[] to = new int[] { R.id.tvItemTaskName, R.id.tvItemTaskDesc };
@@ -57,7 +57,7 @@ public class TaskProviderService extends Service
         myDBHelper.close();
     }
     /* ===================== methods for work with database ===================== */
-    public long insert( Task theTask )
+    private long insert( Task theTask )
     {
         ContentValues aCV = new ContentValues();
         if( theTask.getId() != Task.INCORRECT_ID )
@@ -72,7 +72,7 @@ public class TaskProviderService extends Service
         return myDataBase.insert( TABLE_NAME, null, aCV );
     }
 
-    public int update( Task theTask )
+    private int update( Task theTask )
     {
         ContentValues aCV = new ContentValues();
         aCV.put( Task.LABEL_NAME, theTask.getName() );
@@ -85,8 +85,7 @@ public class TaskProviderService extends Service
 
         return myDataBase.update(TABLE_NAME, aCV, aSelection, aSelectionArgs);
     }
-
-    public ArrayList<Task> getTasks()
+    private ArrayList<Task> getTasks()
     {
         ArrayList<Task> res = new ArrayList<Task>();
         Cursor aCursor = myDataBase.query( TABLE_NAME, null, null, null, null, null, null );
@@ -102,23 +101,12 @@ public class TaskProviderService extends Service
         return res;
     }
 
-    public int removeTasks()
+    private int removeTasks()
     {
         return myDataBase.delete(TABLE_NAME, null, null);
     }
 
-    public int removeTaskById( long theId )
-    {
-        return removeTasks(Task.LABEL_ID, new String[]{String.valueOf(theId)});
-    }
-
-    public int removeTask( Task theTask )
-    {
-        return removeTaskById(theTask.getId());
-    }
-
-    /* ===================== internal protected methods ===================== */
-    protected ArrayList<Task> getTasks( String theColumn, String[] theValues)
+    private ArrayList<Task> getTasks( String theColumn, String[] theValues)
     {
         ArrayList<Task> res = new ArrayList<Task>();
         String aSelection = theColumn + " = ?";
@@ -135,13 +123,13 @@ public class TaskProviderService extends Service
         return res;
     }
 
-    protected int removeTasks( String theColumn, String[] theValues)
+    private int removeTasks( String theColumn, String[] theValues)
     {
         String aSelection = theColumn + " = ?";
         return myDataBase.delete( TABLE_NAME, aSelection, theValues );
     }
 
-    protected int getNmbTasks( String theColumn, String[] theValues)
+    private int getNmbTasks( String theColumn, String[] theValues)
     {
         String aSelection = theColumn + " = ?";
         Cursor aCursor = myDataBase.query(TABLE_NAME, null, aSelection, theValues, null, null, null);
@@ -150,14 +138,25 @@ public class TaskProviderService extends Service
         return res;
     }
 
+    private int removeTaskById( long theId )
+    {
+        return removeTasks(Task.LABEL_ID, new String[]{String.valueOf(theId)});
+    }
+
+    private int removeTask( Task theTask )
+    {
+        return removeTaskById(theTask.getId());
+    }
+
     /* ===================== methods for work with activities ===================== */
     public boolean AddNewTask( Task theTask )
     {
         // update database
-        theTask.setId( insert( theTask ) );
+        long anId = insert( theTask );
+        theTask.setId( anId );
 
         // update view
-        myData.add( new Task.Adapter( theTask ) );
+        myData.add( theTask );
         myAdapter.notifyDataSetChanged();
 
         return true;
@@ -170,7 +169,7 @@ public class TaskProviderService extends Service
         update( theTask );
 
         // update view
-        myData.set( position, new Task.Adapter( theTask ) );
+        myData.set( position, theTask );
         myAdapter.notifyDataSetChanged();
 
         return true;
@@ -202,14 +201,14 @@ public class TaskProviderService extends Service
     {
         ArrayList<Task> ret = getTasks( Task.LABEL_ID, new String[] { String.valueOf( theId ) } );
         if( ret == null || ret.isEmpty() )
-            return new Task();
+            return Task.getInvalid();
 
         return ret.get( 0 );
     }
 
     public Task GetTaskByPosition( int position )
     {
-        return new Task( myData.get( position ) );
+        return myData.get( position );
     }
 
     public int GetNmbTaskWithName(String theName)
@@ -227,10 +226,10 @@ public class TaskProviderService extends Service
     private Task readTask( Cursor theCursor )
     {
         return  new Task( theCursor.getLong( myIdColIndex ),
-                theCursor.getString( myNameColIndex ),
-                theCursor.getString( myDescriptionColIndex ),
-                theCursor.getInt( myPriorityColIndex ),
-                theCursor.getInt( myIsDoneColIndex ) == 1 );
+                          theCursor.getString( myNameColIndex ),
+                          theCursor.getString( myDescriptionColIndex ),
+                          theCursor.getInt( myPriorityColIndex ),
+                          theCursor.getInt( myIsDoneColIndex ) == 1 );
     }
     /* ===================== private fields ===================== */
     MyBinder binder;
@@ -247,7 +246,7 @@ public class TaskProviderService extends Service
     private int myIsDoneColIndex;
 
     // data for adapter
-    private ArrayList<Task.Adapter> myData;
+    private ArrayList<Task> myData;
     private SimpleAdapter myAdapter;
 
     /* ===================== internal classes ===================== */

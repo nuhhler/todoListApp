@@ -9,8 +9,8 @@ import java.util.HashMap;
 /**
  * Created by sdv on 11.06.14.
  */
-public class Task implements Parcelable {
-
+public class Task extends HashMap<String, Object> implements Parcelable
+{
     public static final String LABEL_ID = "_id";
     public static final String LABEL_NAME = "name";
     public static final String LABEL_DESCRIPTION = "description";
@@ -47,15 +47,21 @@ public class Task implements Parcelable {
     }
 
     /* ===================== constructors ===================== */
-    public Task()
+    static Task getInvalid()
     {
-        setId( INCORRECT_ID );
-        setPriority( Priority.INCORRECT );
+        return new Task();
+    }
+
+    private Task()
+    {
+        super();
     }
 
     public Task(String theName, String theDescription, Priority thePriority)
     {
         this();
+        setId( INCORRECT_ID );
+        setDone( false );
         setName( theName );
         setDescription( theDescription );
         setPriority( thePriority );
@@ -75,20 +81,21 @@ public class Task implements Parcelable {
 
     /* ===================== getters & setters ===================== */
     public String getName() {
-        return name;
+        return (String) get(LABEL_NAME);
     }
 
     public void setName( String name ) {
-        this.name = name;
+        super.put(LABEL_NAME, name );
     }
 
     public Priority getPriority()
     {
-        return priority;
+        return (Priority) get(LABEL_PRIORITY);
     }
 
-    public void setPriority( Priority priority ) {
-        this.priority = priority;
+    public void setPriority( Priority priority )
+    {
+        super.put( LABEL_PRIORITY, priority );
     }
 
     public void setPriority( int priority ) {
@@ -96,27 +103,27 @@ public class Task implements Parcelable {
     }
 
     public boolean isDone() {
-        return isDone;
+        return (Boolean) get(LABEL_IS_DONE);
     }
 
     public void setDone( boolean isDone ) {
-        this.isDone = isDone;
+        super.put( LABEL_IS_DONE, isDone );
     }
 
     public String getDescription() {
-        return description;
+        return (String) get(LABEL_DESCRIPTION);
     }
 
     public void setDescription( String description ) {
-        this.description = description;
+        super.put( LABEL_DESCRIPTION, description);
     }
 
     public long getId() {
-        return id;
+        return (Long) get(LABEL_ID);
     }
 
     public void setId( long id ) {
-        this.id = id;
+        super.put(LABEL_ID, id);
     }
 
 
@@ -157,65 +164,6 @@ public class Task implements Parcelable {
         }
     };
 
-    /* ===================== data exchange ===================== */
-    static class Adapter extends HashMap<String, Object> {
-        Adapter( Task theTask )
-        {
-            if ( Task.isValid(theTask) )
-            {
-                put( LABEL_ID, theTask.getId() );
-                put( LABEL_NAME, theTask.getName() );
-                put( LABEL_DESCRIPTION, theTask.getDescription() );
-                put( LABEL_PRIORITY, theTask.getPriority() );
-                put( LABEL_IS_DONE, theTask.isDone() );
-            }
-            else
-            {
-                put(LABEL_ID, Task.INCORRECT_ID );
-            }
-        }
-
-        // @override
-        public boolean equals( Object o )
-        {
-            if ( this == o ) return true;
-            if ( o == null ) return false;
-
-            if( getClass() == o.getClass() ) {
-                Adapter adapter = (Adapter) o;
-                return get(LABEL_ID) == adapter.get(LABEL_ID);
-            }
-            else if( o instanceof Task)
-            {
-                Task aData = (Task) o;
-                return (Long)get(LABEL_ID) == aData.getId();
-            }
-            else
-                return false;
-        }
-    }
-
-    Task(Adapter theAdapter)
-    {
-        this();
-        if( Task.isValid(theAdapter) )
-        {
-            setId( (Long) theAdapter.get(LABEL_ID) );
-            setName( (String) theAdapter.get(LABEL_NAME) );
-            setDescription( (String) theAdapter.get(LABEL_DESCRIPTION) );
-            setPriority( (Priority) theAdapter.get(LABEL_PRIORITY) );
-            setDone( (Boolean) theAdapter.get(LABEL_IS_DONE) );
-        }
-    }
-
-    public static ArrayList<Adapter> toTaskAdapterList(ArrayList<Task> theTasks)
-    {
-        ArrayList<Adapter> res = new ArrayList<Adapter>();
-        for( Task aTask: theTasks )
-            res.add( new Adapter( aTask) );
-        return res;
-    }
-
     /* ===================== general methods ===================== */
 
     @Override
@@ -228,34 +176,35 @@ public class Task implements Parcelable {
             Task aData = (Task) o;
             return getId() == aData.getId();
         }
-        else if( o instanceof Adapter)
-        {
-            Adapter anAdapter = (Adapter) o;
-            return (Long)anAdapter.get(LABEL_ID) == getId();
-        }
         else
             return false;
     }
 
     @Override
     public int hashCode() {
-        return (int) (id ^ (id >>> 32));
+        return (int) (getId() ^ (getId() >>> 32));
     }
 
     public static boolean isValid( Task theTask )
     {
-        return theTask != null && theTask.getId() != INCORRECT_ID;
+        return theTask != null && !theTask.isEmpty() && theTask.getId() != INCORRECT_ID;
     }
 
-    public static boolean isValid( Adapter theAdapter)
-    {
-        return theAdapter != null && (Long) theAdapter.get(LABEL_ID) != INCORRECT_ID;
+    /* ===================== hide methods ===================== */
+    public Object put(String key, Object value) {
+        throw new UnsupportedOperationException("not supported");
     }
 
-    /* ===================== private fields ===================== */
-    private long id;
-    private String name;
-    private String description;
-    private Priority priority;
-    private boolean isDone; // todo it would be better to make execution status of the task, make enum
+    public void putAll( HashMap<String, Object> map) {
+        throw new UnsupportedOperationException("not supported");
+    }
+
+    public Object remove(java.lang.Object key) {
+        throw new UnsupportedOperationException("not supported");
+    }
+
+    public void clear() {
+        throw new UnsupportedOperationException("not supported");
+    }
+
 }
