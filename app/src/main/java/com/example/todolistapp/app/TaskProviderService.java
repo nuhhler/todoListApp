@@ -1,31 +1,37 @@
 package com.example.todolistapp.app;
 
+import android.app.Service;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Binder;
+import android.os.IBinder;
+import android.widget.SimpleAdapter;
 
 import java.util.ArrayList;
 
-/**
- * Created by sdv on 11.06.14.
- */
-public class TaskProvider
+public class TaskProviderService extends Service
 {
+    /* ===================== static fields ===================== */
     private static final String DB_NAME = "todoListApp_DB";
     private static final String TABLE_NAME = "todoList_Table";
 
-    private static TaskProvider ourInstance = null ;
-
-    /* ===================== access and initialize methods ===================== */
-    public static TaskProvider getInstance() {
-        return ourInstance;
+    /* ===================== service methods ===================== */
+    @Override
+    public IBinder onBind(Intent intent)
+    {
+        return binder;
     }
 
-    private TaskProvider(Context theContext)
+    public void onCreate()
     {
-        myDBHelper = new DBHelper( theContext );
+        super.onCreate();
+        binder = new MyBinder();
+
+        myDBHelper = new DBHelper( getApplicationContext() );
         myDataBase = myDBHelper.getWritableDatabase();
 
         // get indexes of columns
@@ -36,21 +42,20 @@ public class TaskProvider
         myPriorityColIndex = c.getColumnIndex( Task.LABEL_PRIORITY );
         myIsDoneColIndex = c.getColumnIndex( Task.LABEL_IS_DONE );
         c.close();
+
+        myData = Task.toTaskAdapterList( getTasks() );
+
+        String[] from = new String[] { Task.LABEL_NAME, Task.LABEL_DESCRIPTION };
+        int[] to = new int[] { R.id.tvItemTaskName, R.id.tvItemTaskDesc };
+
+        myAdapter = new SimpleAdapter( this, myData, R.layout.task_item_list, from, to );
     }
 
-    public static void initialize( Context theContext )
+    public void onDestroy()
     {
-        if( ourInstance != null )
-            return;
-
-        ourInstance = new TaskProvider( theContext );
-    }
-
-    public void close()
-    {
+        super.onDestroy();
         myDBHelper.close();
     }
-
     /* ===================== methods for work with database ===================== */
     public long insert( Task theTask )
     {
@@ -95,11 +100,6 @@ public class TaskProvider
         }
         aCursor.close();
         return res;
-    }
-
-    public int getNmbTasksWithName( String theName )
-    {
-        return getNmbTasks(Task.LABEL_NAME, new String[]{theName});
     }
 
     public int removeTasks()
@@ -150,28 +150,113 @@ public class TaskProvider
         return res;
     }
 
+    /* ===================== methods for work with activities ===================== */
+    public boolean AddNewTask( Task theTask )
+    {
+        // update database
+        theTask.setId( insert( theTask ) );
+
+        // update view
+        myData.add( new Task.Adapter( theTask ) );
+        myAdapter.notifyDataSetChanged();
+
+        return true;
+    }
+
+    public boolean UpdateTask( int position, Task theTask )
+    {
+        // update database
+        theTask.setId( (Long)myData.get( position).get(Task.LABEL_ID) );
+        update( theTask );
+
+        // update view
+        myData.set( position, new Task.Adapter( theTask ) );
+        myAdapter.notifyDataSetChanged();
+
+        return true;
+    }
+
+    public boolean RemoveTaskOnPosition(int position)
+    {
+        // update view
+        long id = (Long) myData.remove( position ).get(Task.LABEL_ID);
+        myAdapter.notifyDataSetChanged();
+
+        // remove from database
+        removeTaskById( id );
+
+        return true;
+    }
+
+    public boolean RemoveAll()
+    {
+        if( removeTasks() != 0 )
+        {
+            myData.clear();
+            myAdapter.notifyDataSetChanged();
+        }
+        return true;
+    }
+
+    public Task GetTaskById( long theId )
+    {
+        ArrayList<Task> ret = getTasks( Task.LABEL_ID, new String[] { String.valueOf( theId ) } );
+        if( ret == null || ret.isEmpty() )
+            return new Task();
+
+        return ret.get( 0 );
+    }
+
+    public Task GetTaskByPosition( int position )
+    {
+        return new Task( myData.get( position ) );
+    }
+
+    public int GetNmbTaskWithName(String theName)
+    {
+        return getNmbTasks(Task.LABEL_NAME, new String[]{theName});
+    }
+
+    /* ===================== getters and setters ===================== */
+    SimpleAdapter getAdapter()
+    {
+        return myAdapter;
+    }
+
     /* ===================== internal private methods ===================== */
     private Task readTask( Cursor theCursor )
     {
         return  new Task( theCursor.getLong( myIdColIndex ),
-                              theCursor.getString( myNameColIndex ),
-                              theCursor.getString( myDescriptionColIndex ),
-                              theCursor.getInt( myPriorityColIndex ),
-                              theCursor.getInt( myIsDoneColIndex ) == 1 );
+                theCursor.getString( myNameColIndex ),
+                theCursor.getString( myDescriptionColIndex ),
+                theCursor.getInt( myPriorityColIndex ),
+                theCursor.getInt( myIsDoneColIndex ) == 1 );
     }
-
     /* ===================== private fields ===================== */
-    private final DBHelper myDBHelper;
-    private final SQLiteDatabase myDataBase;
+    MyBinder binder;
+
+    // database fields
+    private DBHelper myDBHelper;
+    private SQLiteDatabase myDataBase;
 
     // column indexes
-    private final int myIdColIndex;
-    private final int myNameColIndex;
-    private final int myDescriptionColIndex;
-    private final int myPriorityColIndex;
-    private final int myIsDoneColIndex;
+    private int myIdColIndex;
+    private int myNameColIndex;
+    private int myDescriptionColIndex;
+    private int myPriorityColIndex;
+    private int myIsDoneColIndex;
+
+    // data for adapter
+    private ArrayList<Task.Adapter> myData;
+    private SimpleAdapter myAdapter;
 
     /* ===================== internal classes ===================== */
+    class MyBinder extends Binder {
+        TaskProviderService getService() {
+            return TaskProviderService.this;
+        }
+    }
+
     class DBHelper extends SQLiteOpenHelper
     {
         public DBHelper( Context theContext )

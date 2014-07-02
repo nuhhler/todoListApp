@@ -1,6 +1,9 @@
 package com.example.todolistapp.app;
 
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.IBinder;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.ContextMenu;
@@ -11,70 +14,61 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
-import java.util.ArrayList;
 
-
-public class MainActivity extends ActionBarActivity implements View.OnClickListener {
-
-    private static final int REQUEST_CODE_TASK_DETAIL = 1;
-
+public class MainActivity extends ActionBarActivity implements View.OnClickListener
+{
     @Override
     protected void onCreate( Bundle savedInstanceState )
     {
         super.onCreate( savedInstanceState );
         setContentView( R.layout.activity_main );
 
-        TaskProvider.initialize(this);
-        myTaskProvider = TaskProvider.getInstance();
-
         // get Views
         Button aBtnNewTask = (Button)findViewById( R.id.btnNewTask );
         ListView aLVTaskList = (ListView)findViewById( R.id.lvTaskList );
 
-        // fill task list
-        String[] from = new String[] { Task.LABEL_NAME, Task.LABEL_DESCRIPTION };
-        int[] to = new int[] { R.id.tvItemTaskName, R.id.tvItemTaskDesc };
+        myIntent = new Intent( this, TaskProviderService.class );
+        myConnection = new ServiceConnection()
+        {
+            public void onServiceConnected( ComponentName name, IBinder binder )
+            {
+                ListView aLVTaskList = (ListView)findViewById( R.id.lvTaskList );
+                myTaskProvider = ((TaskProviderService.MyBinder) binder).getService();
+                aLVTaskList.setAdapter(myTaskProvider.getAdapter());
+            }
 
-        myData = Task.toTaskAdapterList(myTaskProvider.getTasks());
-        myAdapter = new SimpleAdapter( this, myData, R.layout.task_item_list, from, to );
-        aLVTaskList.setAdapter( myAdapter );
+            public void onServiceDisconnected(ComponentName name)
+            {
+                // todo process the error
+            }
+        };
+        startService( myIntent );
 
         // register events
         aBtnNewTask.setOnClickListener( this );
-        registerForContextMenu(aLVTaskList);
-
+        registerForContextMenu( aLVTaskList );
     }
 
     protected void onDestroy()
     {
         super.onDestroy();
-        myTaskProvider.close();
+        myTaskProvider.stopSelf();
     }
 
-    protected void onActivityResult( int theRequestCode, int theResultCode, Intent theData )
+    @Override
+    protected void onStart()
     {
-        if ( theRequestCode == REQUEST_CODE_TASK_DETAIL &&
-             theResultCode == TaskDetailActivity.RESULT_NEW )
-        {
-            Task aTask = theData.getParcelableExtra( Task.class.getCanonicalName() );
-            myData.add( new Task.Adapter( aTask ) );
-            myAdapter.notifyDataSetChanged();
-        }
-        else if ( theRequestCode == REQUEST_CODE_TASK_DETAIL &&
-                  theResultCode == TaskDetailActivity.RESULT_EDITED )
-        {
-            Task aTask = theData.getParcelableExtra( Task.class.getCanonicalName() );
-            Task.Adapter anAdapter = new Task.Adapter( aTask );
-            int idx = myData.indexOf(anAdapter);
-            if( idx != -1 )
-            {
-                myData.set( idx, anAdapter);
-                myAdapter.notifyDataSetChanged();
-            }
-        }
+        super.onStart();
+        bindService( myIntent, myConnection, 0 );
+    }
+
+    @Override
+    protected void onStop()
+    {
+        super.onStop();
+        unbindService( myConnection );
     }
 
     @Override
@@ -89,13 +83,9 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     public boolean onOptionsItemSelected(MenuItem item)
     {
         int id = item.getItemId();
-        if ( id == R.id.action_removeAll ) {
-            if( myTaskProvider.removeTasks() != 0 )
-            {
-                myData.clear();
-                myAdapter.notifyDataSetChanged();
-            }
-            return true;
+        if ( id == R.id.action_removeAll )
+        {
+            return myTaskProvider.RemoveAll();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -105,8 +95,8 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         if( theView.getId() == R.id.btnNewTask )
         {
             Intent anIntent = new Intent( this, TaskDetailActivity.class );
-            anIntent.putExtra( Task.class.getCanonicalName(), new Task() );
-            startActivityForResult ( anIntent, REQUEST_CODE_TASK_DETAIL );
+            anIntent.putExtra( "POSITION", -1 ); // todo remove magic nambers
+            startActivity( anIntent );
         }
     }
 
@@ -130,7 +120,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     public boolean onContextItemSelected( MenuItem item )
     {
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-        Task aTask =  new Task( myData.get( info.position ) );
         switch( item.getItemId() ) {
             case R.id.cm_item_list_set_executed:
             {
@@ -142,24 +131,21 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             case R.id.cm_item_list_edit:
             {
                 Intent anIntent = new Intent( this, TaskDetailActivity.class );
-                anIntent.putExtra( Task.class.getCanonicalName(), aTask );
-                startActivityForResult( anIntent, REQUEST_CODE_TASK_DETAIL );
+                anIntent.putExtra( "POSITION", info.position ); // todo remove magic nambers
+                startActivity( anIntent );
                 return true;
             }
             case R.id.cm_item_list_delete:
             {
-                myTaskProvider.removeTask( aTask );
-                myData.remove( info.position );
-                myAdapter.notifyDataSetChanged();
-                return true;
+                return myTaskProvider.RemoveTaskOnPosition(info.position);
             }
             default:
                 return super.onContextItemSelected(item);
         }
     }
 
-    // private fields:
-    private TaskProvider myTaskProvider;
-    private SimpleAdapter myAdapter;
-    private ArrayList<Task.Adapter> myData;
+    /* ===================== private fields ===================== */
+    private ServiceConnection myConnection;
+    Intent myIntent;
+    private TaskProviderService myTaskProvider;
 }

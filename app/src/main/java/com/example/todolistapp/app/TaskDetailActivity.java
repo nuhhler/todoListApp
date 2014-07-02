@@ -2,8 +2,11 @@ package com.example.todolistapp.app;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.IBinder;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -21,9 +24,6 @@ import android.widget.Toast;
 
 public class TaskDetailActivity extends ActionBarActivity implements View.OnClickListener, DialogInterface.OnClickListener {
 
-    public static final int RESULT_NEW = 100;
-    public static final int RESULT_EDITED = 101;
-
     private static final int DIALOG_CONFIRM = 1;
 
     @Override
@@ -31,8 +31,6 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
     {
         super.onCreate( savedInstanceState );
         setContentView( R.layout.activity_task_detail );
-
-        myTaskProvider = TaskProvider.getInstance();
 
         // get Views
         etTaskName = (EditText)findViewById(R.id.etTaskName);
@@ -46,27 +44,55 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
         aBtnCancel.setOnClickListener(this);
         rbgPriority.setOnClickListener( this );
 
-        // restore values if user edits the existing task
-        myTask = getIntent().getParcelableExtra(Task.class.getCanonicalName());
-        if( Task.isValid(myTask) )
+        myIntent = new Intent( this, TaskProviderService.class );
+        myConnection = new ServiceConnection()
         {
-            etTaskName.setText( myTask.getName() );
-            etTaskDescription.setText( myTask.getDescription() );
-            switch ( myTask.getPriority() )
+            public void onServiceConnected( ComponentName name, IBinder binder )
             {
-                case LOW:
-                    rbgPriority.check( R.id.rbtnLowPriority );
-                    break;
-                case NORMAL:
-                    rbgPriority.check( R.id.rbtnNormalPriority );
-                    break;
-                case HIGH:
-                    rbgPriority.check( R.id.rbtnHighPriority );
-                    break;
+                myTaskProvider = ((TaskProviderService.MyBinder) binder).getService();
+
+                // restore values if user edits the existing task
+                myTaskPosition = getIntent().getIntExtra("POSITION", -1 );// todo remove magic values
+                if( myTaskPosition != -1 )
+                {
+                    Task aTask = myTaskProvider.GetTaskByPosition( myTaskPosition );
+                    etTaskName.setText( aTask.getName() );
+                    etTaskDescription.setText( aTask.getDescription() );
+                    switch ( aTask.getPriority() )
+                    {
+                        case LOW:
+                            rbgPriority.check( R.id.rbtnLowPriority );
+                            break;
+                        case NORMAL:
+                            rbgPriority.check( R.id.rbtnNormalPriority );
+                            break;
+                        case HIGH:
+                            rbgPriority.check( R.id.rbtnHighPriority );
+                            break;
+                    }
+                }
             }
-        }
+
+            public void onServiceDisconnected(ComponentName name)
+            {
+                // todo process the error
+            }
+        };
     }
 
+    @Override
+    protected void onStart()
+    {
+        super.onStart();
+        bindService( myIntent, myConnection, 0 );
+    }
+
+    @Override
+    protected void onStop()
+    {
+        super.onStop();
+        unbindService( myConnection );
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -96,9 +122,10 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
                     return;
                 }
 
-                int nmb = myTaskProvider.getNmbTasksWithName( aName );
+                int nmb = myTaskProvider.GetNmbTaskWithName(aName);
                 if( nmb == 0 ||
-                    nmb == 1 && isEditMode() && myTask.getName().equals( aName ) )
+                    nmb == 1 && isEditMode() &&
+                    myTaskProvider.GetTaskByPosition( myTaskPosition ).getName().equals( aName ) )
                 {
                     executeOperation();
                 }
@@ -170,37 +197,23 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
 
     private boolean isEditMode()
     {
-        return Task.isValid(myTask);
+        return myTaskPosition != -1; // todo remove magic number;
     }
 
     private void executeOperation()
     {
-        Intent anIntent = new Intent();
-        int result;
-
-
+        Task aTask =  new Task( etTaskName.getText().toString(),
+                                etTaskDescription.getText().toString(),
+                                getPriority() );
         if ( isEditMode() )
         {
-            result = RESULT_EDITED;
-            myTask.setName( etTaskName.getText().toString() );
-            myTask.setDescription( etTaskDescription.getText().toString() );
-            myTask.setPriority( getPriority() );
-            myTaskProvider.update( myTask );
+            myTaskProvider.UpdateTask(myTaskPosition, aTask);
         }
         else
         {
-            result = RESULT_NEW;
-            myTask = new Task( etTaskName.getText().toString(),
-                                   etTaskDescription.getText().toString(),
-                                   getPriority() );
-            long anId = myTaskProvider.insert( myTask );
-            myTask.setId( anId );
+            myTaskProvider.AddNewTask(aTask);
         }
 
-        // send result
-        anIntent.putExtra( Task.class.getCanonicalName(), myTask );
-        setResult( result, anIntent );
-        myTask = null;
         finish();
     }
 
@@ -208,7 +221,10 @@ public class TaskDetailActivity extends ActionBarActivity implements View.OnClic
     private RadioGroup rbgPriority;
     private EditText etTaskName;
     private EditText etTaskDescription;
-    private TaskProvider myTaskProvider;
-    private Task myTask;
+    private int myTaskPosition;
+
+    private TaskProviderService myTaskProvider;
+    ServiceConnection myConnection;
+    Intent myIntent;
 
 }

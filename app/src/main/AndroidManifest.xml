@@ -20,6 +20,12 @@
             android:name="com.example.todolistapp.app.TaskDetailActivity"
             android:label="@string/title_activity_task_detail" >
         </activity>
+
+        <service
+            android:name="com.example.todolistapp.app.TaskProviderService"
+            android:enabled="true"
+            android:exported="true" >
+        </service>
     </application>
 
 </manifest>
