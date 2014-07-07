@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.IBinder;
 import android.widget.SimpleAdapter;
@@ -151,39 +152,73 @@ public class TaskProviderService extends Service
     /* ===================== methods for work with activities ===================== */
     public boolean AddNewTask( Task theTask )
     {
-        // update database
-        long anId = insert( theTask );
-        theTask.setId( anId );
+        class AT_AddNewTask extends AsyncTask<Task, Void, Task>
+        {
+            protected Task doInBackground(Task... params) {
+                Task aTask = params[0];
+                aTask.setId( insert( aTask ) );
+                return aTask;
+            }
 
-        // update view
-        myData.add( theTask );
-        myAdapter.notifyDataSetChanged();
+            protected void onPostExecute( Task result ) {
+                super.onPostExecute(result);
+                myData.add( result );
+                myAdapter.notifyDataSetChanged();
+            }
+        };
 
+        new AT_AddNewTask().execute( theTask );
         return true;
     }
 
     public boolean UpdateTask( int position, Task theTask )
     {
-        // update database
-        theTask.setId( (Long)myData.get( position).get(Task.LABEL_ID) );
-        update( theTask );
+        class AT_UpdateTask extends AsyncTask<Void, Void, Void>
+        {
+            private int myPosition;
+            private Task myTask;
 
-        // update view
-        myData.set( position, theTask );
-        myAdapter.notifyDataSetChanged();
+            AT_UpdateTask(int position, Task theTask)
+            {
+                myPosition = position;
+                myTask = theTask;
+            }
 
+            protected Void doInBackground(Void... params) {
+                myTask.setId( myData.get( myPosition).getId() );
+                update( myTask );
+                return null;
+            }
+
+            protected void onPostExecute( Void result ) {
+                super.onPostExecute(result);
+                myData.set( myPosition, myTask );
+                myAdapter.notifyDataSetChanged();
+            }
+        };
+
+        new AT_UpdateTask( position, theTask ).execute();
         return true;
     }
 
-    public boolean RemoveTaskOnPosition(int position)
+    public boolean RemoveTaskOnPosition( int position )
     {
-        // update view
-        long id = (Long) myData.remove( position ).get(Task.LABEL_ID);
-        myAdapter.notifyDataSetChanged();
+        class AT_RemoveTaskOnPosition extends AsyncTask<Integer, Void, Integer>
+        {
+            protected Integer doInBackground(Integer... params) {
+                long anId = myData.get( params[0] ).getId();
+                removeTaskById( anId );
+                return params[0];
+            }
 
-        // remove from database
-        removeTaskById( id );
+            protected void onPostExecute(Integer position) {
+                super.onPostExecute(position);
+                myData.remove(position);
+                myAdapter.notifyDataSetChanged();
+            }
+        };
 
+        new AT_RemoveTaskOnPosition().execute();
         return true;
     }
 
@@ -225,7 +260,7 @@ public class TaskProviderService extends Service
     /* ===================== internal private methods ===================== */
     private Task readTask( Cursor theCursor )
     {
-        return  new Task( theCursor.getLong( myIdColIndex ),
+        return  new Task( theCursor.getLong(myIdColIndex),
                           theCursor.getString( myNameColIndex ),
                           theCursor.getString( myDescriptionColIndex ),
                           theCursor.getInt( myPriorityColIndex ),
