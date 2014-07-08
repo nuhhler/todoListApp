@@ -49,7 +49,7 @@ public class TaskProviderService extends Service
         String[] from = new String[] { Task.LABEL_NAME, Task.LABEL_DESCRIPTION };
         int[] to = new int[] { R.id.tvItemTaskName, R.id.tvItemTaskDesc };
 
-        myAdapter = new SimpleAdapter( this, myData, R.layout.task_item_list, from, to );
+        myAdapter = new SimpleAdapter( getApplicationContext(), myData, R.layout.task_item_list, from, to );
     }
 
     public void onDestroy()

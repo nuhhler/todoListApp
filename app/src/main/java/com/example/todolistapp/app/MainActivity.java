@@ -27,7 +27,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
         // get Views
         Button aBtnNewTask = (Button)findViewById( R.id.btnNewTask );
-        ListView aLVTaskList = (ListView)findViewById( R.id.lvTaskList );
 
         myIntent = new Intent( this, TaskProviderService.class );
         myConnection = new ServiceConnection()
@@ -37,6 +36,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 ListView aLVTaskList = (ListView)findViewById( R.id.lvTaskList );
                 myTaskProvider = ((TaskProviderService.MyBinder) binder).getService();
                 aLVTaskList.setAdapter(myTaskProvider.getAdapter());
+                registerForContextMenu( aLVTaskList );
             }
 
             public void onServiceDisconnected(ComponentName name)
@@ -48,7 +48,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
         // register events
         aBtnNewTask.setOnClickListener( this );
-        registerForContextMenu( aLVTaskList );
     }
 
     protected void onDestroy()
